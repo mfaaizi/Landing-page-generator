@@ -1,26 +1,220 @@
+/* Tailwind v4. On v3 replace this line with the three @tailwind directives. */
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Two independent theme systems.
+   1. The tool's own chrome (--tool-*): fixed, warm dark, never themed by user.
+   2. The generated page (.page-scope): light/dark via data-theme on the scope
+      element, never on <html>. Sections read page variables only. No
+      Tailwind dark: inside a section, ever.
+--------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tool-bg: #101114;
+  --tool-panel: #17181c;
+  --tool-panel-2: #1d1f24;
+  --tool-border: #2a2d34;
+  --tool-text: #ebecef;
+  --tool-muted: #9297a3;
+  --tool-accent: #d9c9a3;
+  --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+  --ease-back: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html,
+body {
+  background: var(--tool-bg);
+  color: var(--tool-text);
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ------------------------------------------------------------ page scope */
+
+.page-scope {
+  container-type: inline-size;
+  container-name: page;
+  position: relative;
+  isolation: isolate;
+  font-family: var(--font-body), system-ui, sans-serif;
+  color: var(--page-text);
+  background: var(--page-bg);
+
+  --accent: #6b8f71;
+  --accent-alt: #8fae86;
+  --radius: 1.25rem;
+
+  /* motion personality; set from the brief's vibe by PreviewFrame */
+  --dur-quick: 160ms;
+  --dur-standard: 320ms;
+  --dur-slow: 640ms;
+  --ease: var(--ease-premium);
+
+  transition:
+    background-color var(--dur-slow) var(--ease),
+    color var(--dur-slow) var(--ease);
+}
+
+.page-scope[data-theme="light"] {
+  --page-bg: #f7f5f1;
+  --page-surface: #ffffff;
+  --page-border: rgba(20, 20, 24, 0.09);
+  --page-text: #16171b;
+  --page-muted: #5f6470;
+  --page-glass: rgba(255, 255, 255, 0.55);
+  --page-glass-border: rgba(255, 255, 255, 0.8);
+  --page-glass-shadow: 0 20px 60px -30px rgba(20, 20, 30, 0.35);
+  --page-mesh-opacity: 0.55;
+  --page-shape-opacity: 0.7;
+  --accent-ink: #ffffff;
+}
+
+.page-scope[data-theme="dark"] {
+  --page-bg: #0b0c10;
+  --page-surface: #13151b;
+  --page-border: rgba(255, 255, 255, 0.1);
+  --page-text: #f1f2f5;
+  --page-muted: #a0a6b3;
+  --page-glass: rgba(255, 255, 255, 0.05);
+  --page-glass-border: rgba(255, 255, 255, 0.12);
+  --page-glass-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.8);
+  --page-mesh-opacity: 0.5;
+  --page-shape-opacity: 0.55;
+  --accent-ink: #0b0c10;
+}
+
+.page-scope *,
+.page-scope *::before,
+.page-scope *::after {
+  transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+  transition-duration: var(--dur-slow);
+  transition-timing-function: var(--ease);
+}
+
+/* The theme sweep: a soft accent light passes over the page on toggle so the
+   change reads as a morph rather than a hard cut. Driven by PreviewFrame. */
+.page-scope::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  background: radial-gradient(
+    120% 80% at var(--sweep-x, 90%) var(--sweep-y, 0%),
+    color-mix(in srgb, var(--accent) 35%, transparent),
+    transparent 60%
+  );
+}
+.page-scope[data-sweeping="true"]::after {
+  animation: theme-sweep 900ms var(--ease-premium);
+}
+@keyframes theme-sweep {
+  0% { opacity: 0; transform: scale(0.6); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* --------------------------------------------------------------- glass */
+
+.glass {
+  background: var(--page-glass);
+  border: 1px solid var(--page-glass-border);
+  box-shadow:
+    var(--page-glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-radius: var(--radius);
+}
+.page-scope[data-theme="dark"] .glass {
+  box-shadow:
+    var(--page-glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------------------------------------------------- keyframes */
+
+@keyframes mesh-drift-a {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, -4%, 0) scale(1.12); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes mesh-drift-b {
+  0% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-5%, 6%, 0) scale(0.95); }
+  100% { transform: translate3d(0, 0, 0) scale(1.05); }
+}
+@keyframes mesh-drift-c {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(3%, 3%, 0) rotate(8deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      0 10px 30px -10px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--accent) 12%, transparent),
+      0 14px 40px -8px color-mix(in srgb, var(--accent) 75%, transparent);
+  }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes skeleton-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-scope,
+  .page-scope *,
+  .page-scope *::before,
+  .page-scope *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------------------------------------------------------- tool chrome */
+
+.tool-input {
+  width: 100%;
+  background: var(--tool-panel);
+  border: 1px solid var(--tool-border);
+  border-radius: 0.75rem;
+  color: var(--tool-text);
+  padding: 0.85rem 1rem;
+  outline: none;
+  transition: border-color 160ms var(--ease-snappy);
 }
+.tool-input:focus { border-color: var(--tool-accent); }
+
+.tool-button {
+  border: 1px solid var(--tool-border);
+  background: var(--tool-panel);
+  color: var(--tool-text);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-snappy),
+    border-color 160ms var(--ease-snappy),
+    transform 120ms var(--ease-snappy);
+}
+.tool-button:hover { background: var(--tool-panel-2); border-color: #3a3e47; }
+.tool-button:active { transform: scale(0.98); }
+.tool-button[aria-pressed="true"],
+.tool-button.primary { background: var(--tool-accent); color: #141210; border-color: var(--tool-accent); }
+.tool-button:disabled { opacity: 0.5; cursor: not-allowed; }
