@@ -1,6 +1,6 @@
-<p align="center">
-<strong> AI Landing Page Generator </strong>
-</p>
+<h1 align="center">
+  AI Landing Page Generator
+</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/AI-Powered-570000?style=for-the-badge" />
